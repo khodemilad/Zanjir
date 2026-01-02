@@ -1,10 +1,16 @@
 # Zanjir - Caddy Configuration for IP-only mode
 # Self-signed HTTPS for IP addresses
-# WARNING: Browser will show security warning - click "Advanced" > "Proceed"
+
+{
+    # Disable automatic HTTPS to have more control
+    auto_https off
+}
 
 :443 {
-    # Self-signed TLS for IP
-    tls internal
+    # Generate self-signed cert for the IP and localhost
+    tls internal {
+        on_demand
+    }
 
     # Encode responses
     encode gzip zstd
@@ -26,7 +32,7 @@
         reverse_proxy dendrite:8008
     }
 
-    # Matrix Federation API
+    # Matrix Federation API  
     handle /_dendrite/* {
         reverse_proxy dendrite:8008
     }
@@ -46,14 +52,13 @@
         Referrer-Policy strict-origin-when-cross-origin
     }
 
-    # Logging
     log {
         output stdout
         format console
     }
 }
 
-# Redirect HTTP to HTTPS
+# HTTP redirect
 :80 {
     redir https://{host}{uri} permanent
 }
