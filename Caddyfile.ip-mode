@@ -41,7 +41,17 @@
         file_server
     }
 
-    # Element Web - serve static files
+    # Welcome page - serve our custom page directly (bypasses Element's wrapper)
+    @welcome {
+        path / /welcome /welcome.html
+    }
+    handle @welcome {
+        root * /srv/element
+        rewrite * /welcome.html
+        file_server
+    }
+
+    # Element Web (default)
     handle {
         root * /srv/element
         file_server
