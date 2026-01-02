@@ -139,6 +139,7 @@ setup_caddyfile() {
     else
         cp Caddyfile Caddyfile.active
     fi
+    log_success "Caddy configured."
 }
 
 update_element_config() {
@@ -150,6 +151,7 @@ update_element_config() {
     else
         sed -i "s|\${DOMAIN}|${SERVER_ADDRESS}|g" config/element-config.json
     fi
+    log_success "Element configured."
 }
 
 update_dendrite_config() {
@@ -165,28 +167,56 @@ update_dendrite_config() {
         sed -i "s|:443|:80|g" dendrite/dendrite.yaml
         sed -i "s|https://|http://|g" dendrite/dendrite.yaml
     fi
+    log_success "Dendrite configured."
 }
 
 generate_matrix_key() {
     log_info "Generating Matrix signing key..."
     if [ ! -f "dendrite/matrix_key.pem" ]; then
+        log_info "Pulling Dendrite image (this may take a while)..."
+        docker pull matrixdotorg/dendrite-monolith:latest
+        
+        log_info "Running key generation..."
         docker run --rm -v "$(pwd)/dendrite:/etc/dendrite" \
             matrixdotorg/dendrite-monolith:latest \
-            /usr/bin/generate-keys --private-key /etc/dendrite/matrix_key.pem 2>/dev/null
-        chmod 600 dendrite/matrix_key.pem
-        log_success "Matrix key generated."
+            /usr/bin/generate-keys --private-key /etc/dendrite/matrix_key.pem
+        
+        if [ -f "dendrite/matrix_key.pem" ]; then
+            chmod 600 dendrite/matrix_key.pem
+            log_success "Matrix key generated."
+        else
+            log_error "Failed to generate Matrix key!"
+            exit 1
+        fi
     else
         log_warning "Matrix key already exists."
     fi
 }
 
 start_services() {
-    log_info "Starting services..."
+    log_info "Pulling Docker images (this may take a while)..."
+    docker compose pull
     
-    docker compose run --rm element-copy 2>/dev/null
-    docker compose up -d postgres dendrite element caddy 2>/dev/null
+    log_info "Copying Element files..."
+    docker compose run --rm element-copy
+    
+    log_info "Starting services..."
+    docker compose up -d postgres
+    
+    log_info "Waiting for PostgreSQL to be ready..."
+    sleep 10
+    
+    docker compose up -d dendrite element caddy
+    
+    log_info "Waiting for services to start..."
+    sleep 5
     
     log_success "Services started!"
+}
+
+check_services() {
+    log_info "Checking service status..."
+    docker compose ps
 }
 
 print_success() {
@@ -229,4 +259,5 @@ update_element_config
 update_dendrite_config
 generate_matrix_key
 start_services
+check_services
 print_success
