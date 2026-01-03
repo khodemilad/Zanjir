@@ -190,6 +190,11 @@ update_element_config() {
 update_dendrite_config() {
     log_info "Configuring Dendrite..."
     
+    # Reset config files from git to ensure placeholders exist
+    git checkout -- dendrite/dendrite.yaml 2>/dev/null || true
+    git checkout -- config/element-config.json 2>/dev/null || true
+    
+    # Now replace placeholders
     sed -i "s/\${DOMAIN}/${SERVER_ADDRESS}/g" dendrite/dendrite.yaml
     sed -i "s/\${POSTGRES_USER}/dendrite/g" dendrite/dendrite.yaml
     sed -i "s/\${POSTGRES_PASSWORD}/${POSTGRES_PASSWORD}/g" dendrite/dendrite.yaml
