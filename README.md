@@ -14,6 +14,10 @@
 
 ---
 [![zanjir-screens-copy.webp](https://i.postimg.cc/yYjVzZzN/zanjir-screens-copy.webp)](https://postimg.cc/9r43dz03)
+## آموزش ویدئویی
+
+[![معرفی پروژه زنجیر](https://i.postimg.cc/0Qq8qTFm/zanjir-copy.webp)](https://youtu.be/ZKTOs9y6rpw)
+
 
 ## معرفی
 
