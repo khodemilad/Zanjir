@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Zanjir - Matrix Server Auto-Installer
 # Optimized for Iranian VPS
 set -e
@@ -22,6 +22,182 @@ log_info() { echo -e "${BLUE}[*]${NC} $1"; }
 log_success() { echo -e "${GREEN}[+]${NC} $1"; }
 log_warning() { echo -e "${YELLOW}[!]${NC} $1"; }
 log_error() { echo -e "${RED}[-]${NC} $1"; }
+
+normalize_line_endings() {
+    if ! command -v sed &> /dev/null; then
+        return 0
+    fi
+
+    local files=(
+        "scripts/generate-keys.sh"
+        "docker-compose.yml"
+        "Caddyfile"
+        "Caddyfile.ip-mode"
+        "dendrite/dendrite.yaml"
+        "config/element-config.json"
+    )
+
+    local f
+    for f in "${files[@]}"; do
+        if [ -f "$f" ]; then
+            sed -i 's/\r$//' "$f" 2>/dev/null || true
+        fi
+    done
+}
+
+load_env_if_exists() {
+    if [ -f ".env" ]; then
+        set -a
+        . ./.env
+        set +a
+    fi
+}
+
+is_dockerhub_restriction_error() {
+    local text=$1
+    echo "$text" | grep -Eqi '403 Forbidden|export control regulations|Since Docker is a US company'
+}
+
+json_array_from_csv() {
+    local csv=$1
+    python3 - "$csv" <<'PY'
+import json, sys
+csv = sys.argv[1]
+parts = [p.strip() for p in csv.replace(";", ",").split(",")]
+parts = [p for p in parts if p]
+print(json.dumps(parts))
+PY
+}
+
+configure_docker_registry_mirrors() {
+    local mirrors_csv=$1
+    if [ -z "$mirrors_csv" ]; then
+        return 1
+    fi
+
+    local mirrors_json
+    if command -v python3 &> /dev/null; then
+        mirrors_json=$(json_array_from_csv "$mirrors_csv")
+    else
+        local cleaned
+        cleaned=$(echo "$mirrors_csv" | tr ';' ',' | tr -s ' ')
+        local IFS=,
+        read -ra _parts <<< "$cleaned"
+        local json="["
+        local first=1
+        for p in "${_parts[@]}"; do
+            p=$(echo "$p" | xargs)
+            [ -z "$p" ] && continue
+            if [ "$first" -eq 0 ]; then
+                json+=","
+            fi
+            first=0
+            json+="\"$p\""
+        done
+        json+="]"
+        mirrors_json="$json"
+    fi
+
+    log_info "Configuring Docker registry mirrors..."
+    mkdir -p /etc/docker
+
+    local daemon_file="/etc/docker/daemon.json"
+    if [ -f "$daemon_file" ]; then
+        cp -a "$daemon_file" "${daemon_file}.bak.$(date +%s)" 2>/dev/null || true
+    fi
+
+    if command -v python3 &> /dev/null; then
+        python3 - "$daemon_file" "$mirrors_json" <<'PY'
+import json, sys, pathlib, re
+
+daemon_file = pathlib.Path(sys.argv[1])
+mirrors = json.loads(sys.argv[2])
+
+data = {}
+if daemon_file.exists():
+    try:
+        raw = daemon_file.read_text(encoding="utf-8")
+        data = json.loads(raw) if raw.strip() else {}
+    except Exception:
+        data = {}
+
+def insecure_from_url(url: str) -> str:
+    url = re.sub(r"^https?://", "", url)
+    url = url.split("/", 1)[0]
+    return url
+
+data["registry-mirrors"] = mirrors
+data["insecure-registries"] = sorted({insecure_from_url(u) for u in mirrors})
+
+daemon_file.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+    else
+        cat > "$daemon_file" <<EOF
+{
+  "registry-mirrors": $mirrors_json,
+  "insecure-registries": $(echo "$mirrors_json" | sed -E 's#https?://##g;s#/[^"]*##g')
+}
+EOF
+    fi
+
+    systemctl daemon-reload >/dev/null 2>&1 || true
+    systemctl restart docker
+    log_success "Docker mirrors configured."
+}
+
+ensure_docker_registry_access() {
+    local mirrors_csv="${DOCKER_REGISTRY_MIRRORS:-${DOCKER_REGISTRY_MIRROR:-}}"
+    if [ -n "$mirrors_csv" ]; then
+        configure_docker_registry_mirrors "$mirrors_csv" || true
+        return 0
+    fi
+
+    load_env_if_exists
+    local probe_image="${DOCKER_PROBE_IMAGE:-hello-world:latest}"
+
+    set +e
+    local pull_output
+    pull_output=$(docker pull "$probe_image" 2>&1)
+    local pull_exit=$?
+    set -e
+
+    if [ "$pull_exit" -eq 0 ]; then
+        return 0
+    fi
+
+    if ! is_dockerhub_restriction_error "$pull_output"; then
+        log_warning "Docker pull failed (not a sanctions-style 403). Continuing..."
+        return 0
+    fi
+
+    log_warning "Docker Hub appears restricted from this server IP. Applying Iran-friendly mirrors..."
+
+    local default_mirrors="https://docker.arvancloud.ir,https://registry.docker.ir,https://docker.iranserver.com,https://mirror-docker.runflare.com"
+    configure_docker_registry_mirrors "$default_mirrors"
+}
+
+docker_pull_with_mirror_fallback() {
+    local image=$1
+
+    set +e
+    local out
+    out=$(docker pull "$image" 2>&1)
+    local code=$?
+    set -e
+
+    if [ "$code" -eq 0 ]; then
+        return 0
+    fi
+
+    if is_dockerhub_restriction_error "$out"; then
+        ensure_docker_registry_access
+        docker pull "$image"
+        return $?
+    fi
+
+    echo "$out" >&2
+    return "$code"
+}
 
 check_root() {
     if [ "$EUID" -ne 0 ]; then
@@ -160,6 +336,11 @@ POSTGRES_USER=dendrite
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 POSTGRES_DB=dendrite
 LETSENCRYPT_EMAIL=${ADMIN_EMAIL}
+POSTGRES_IMAGE=postgres:15-alpine
+DENDRITE_IMAGE=matrixdotorg/dendrite-monolith:latest
+ELEMENT_IMAGE=vectorim/element-web:v1.11.50
+ELEMENT_COPY_IMAGE=vectorim/element-web:v1.11.50
+CADDY_IMAGE=caddy:2-alpine
 EOF
     chmod 600 .env
     log_success ".env file created."
@@ -213,14 +394,18 @@ update_dendrite_config() {
 generate_matrix_key() {
     log_info "Generating Matrix signing key..."
     if [ ! -f "dendrite/matrix_key.pem" ]; then
+        load_env_if_exists
+        ensure_docker_registry_access
+        local dendrite_image="${DENDRITE_IMAGE:-matrixdotorg/dendrite-monolith:latest}"
+
         log_info "Pulling Dendrite image (this may take a while)..."
-        docker pull matrixdotorg/dendrite-monolith:latest
+        docker_pull_with_mirror_fallback "$dendrite_image"
         
         log_info "Running key generation..."
         docker run --rm \
             --entrypoint /usr/bin/generate-keys \
             -v "$(pwd)/dendrite:/etc/dendrite" \
-            matrixdotorg/dendrite-monolith:latest \
+            "$dendrite_image" \
             --private-key /etc/dendrite/matrix_key.pem
         
         if [ -f "dendrite/matrix_key.pem" ]; then
@@ -236,8 +421,23 @@ generate_matrix_key() {
 }
 
 start_services() {
+    ensure_docker_registry_access
     log_info "Pulling Docker images (this may take a while)..."
-    docker compose pull
+    set +e
+    local pull_out
+    pull_out=$(docker compose pull 2>&1)
+    local pull_code=$?
+    set -e
+
+    if [ "$pull_code" -ne 0 ]; then
+        if is_dockerhub_restriction_error "$pull_out"; then
+            ensure_docker_registry_access
+            docker compose pull
+        else
+            echo "$pull_out" >&2
+            exit "$pull_code"
+        fi
+    fi
     
     log_info "Copying Element files..."
     docker compose run --rm element-copy
@@ -292,9 +492,11 @@ print_success() {
 # Main
 print_banner
 check_root
+normalize_line_endings
 get_user_input
 install_docker
 install_docker_compose
+ensure_docker_registry_access
 generate_secrets
 create_env_file
 setup_caddyfile

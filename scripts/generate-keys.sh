@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Zanjir - Matrix Signing Key Generator
 # Generates the Dendrite Matrix signing key using Docker
 

@@ -6,7 +6,7 @@ version: '3.8'
 services:
   # PostgreSQL Database
   postgres:
-    image: postgres:15-alpine
+    image: ${POSTGRES_IMAGE:-postgres:15-alpine}
     container_name: zanjir-postgres
     restart: unless-stopped
     environment:
@@ -25,7 +25,7 @@ services:
 
   # Dendrite Matrix Homeserver
   dendrite:
-    image: matrixdotorg/dendrite-monolith:latest
+    image: ${DENDRITE_IMAGE:-matrixdotorg/dendrite-monolith:latest}
     container_name: zanjir-dendrite
     restart: unless-stopped
     depends_on:
@@ -49,7 +49,7 @@ services:
 
   # Element Web Client
   element:
-    image: vectorim/element-web:v1.11.50
+    image: ${ELEMENT_IMAGE:-vectorim/element-web:v1.11.50}
     container_name: zanjir-element
     restart: unless-stopped
     volumes:
@@ -60,7 +60,7 @@ services:
 
   # Caddy Reverse Proxy with Automatic HTTPS
   caddy:
-    image: caddy:2-alpine
+    image: ${CADDY_IMAGE:-caddy:2-alpine}
     container_name: zanjir-caddy
     restart: unless-stopped
     ports:
@@ -83,7 +83,7 @@ services:
 
   # Utility container to copy Element Web files
   element-copy:
-    image: vectorim/element-web:v1.11.50
+    image: ${ELEMENT_COPY_IMAGE:-vectorim/element-web:v1.11.50}
     container_name: zanjir-element-copy
     user: root
     entrypoint: ["/bin/sh", "-c"]
