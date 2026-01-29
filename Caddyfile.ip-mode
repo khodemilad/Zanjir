@@ -2,7 +2,7 @@
 # Self-signed HTTPS for IP addresses
 # WARNING: Browser will show security warning - click "Advanced" > "Proceed"
 
-:443 {
+{$SERVER_ADDRESS}:443 {
     tls internal
 
     encode gzip zstd
