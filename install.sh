@@ -486,7 +486,18 @@ print_success() {
     echo -e "${GREEN}          Installation Complete!                 ${NC}"
     echo -e "${GREEN}=================================================${NC}"
     echo ""
-    echo "URL: ${PROTOCOL}://${SERVER_ADDRESS}"
+    
+    # Construct full URL with port if needed
+    local full_url="${PROTOCOL}://${SERVER_ADDRESS}"
+    if [ "$IP_MODE" = "true" ]; then
+        # In IP mode, always show the port
+        full_url="${full_url}:${HTTPS_PORT}"
+    elif [ "${HTTPS_PORT}" != "443" ]; then
+        # In domain mode, only show port if not standard 443
+        full_url="${full_url}:${HTTPS_PORT}"
+    fi
+    
+    echo "URL: ${full_url}"
     
     if [ "$IP_MODE" = true ]; then
         echo ""
@@ -496,7 +507,7 @@ print_success() {
     
     echo ""
     echo "To create a user, register via Element Web interface at:"
-    echo "  ${PROTOCOL}://${SERVER_ADDRESS}"
+    echo "  ${full_url}"
     echo ""
     echo "Or use the Conduit admin API."
     echo ""
