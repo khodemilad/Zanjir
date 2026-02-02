@@ -58,8 +58,8 @@ services:
       context: ./admin
       args:
         PYTHON_IMAGE: ${PYTHON_IMAGE:-docker.arvancloud.ir/python:3.11-slim}
-        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.ir/simple}
-        PIP_TRUSTED_HOST: ${PIP_TRUSTED_HOST:-pypi.ir}
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirror.chabokan.net/repository/pypi-proxy/simple}
+        PIP_TRUSTED_HOST: ${PIP_TRUSTED_HOST:-mirror.chabokan.net}
     container_name: zanjir-admin
     restart: unless-stopped
     environment:

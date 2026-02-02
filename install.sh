@@ -364,8 +364,8 @@ ELEMENT_COPY_IMAGE=docker.arvancloud.ir/vectorim/element-web:v1.11.50
 CADDY_IMAGE=docker.arvancloud.ir/caddy:2-alpine
 DENDRITE_IMAGE=docker.arvancloud.ir/matrixdotorg/dendrite-monolith:latest
 PYTHON_IMAGE=docker.arvancloud.ir/python:3.11-slim
-PIP_INDEX_URL=https://pypi.ir/simple
-PIP_TRUSTED_HOST=pypi.ir
+PIP_INDEX_URL=https://mirror.chabokan.net/repository/pypi-proxy/simple
+PIP_TRUSTED_HOST=mirror.chabokan.net
 EOF
     chmod 600 .env
     log_success ".env file created."

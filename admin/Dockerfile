@@ -3,8 +3,8 @@ FROM ${PYTHON_IMAGE}
 
 WORKDIR /app
 
-ARG PIP_INDEX_URL=https://pypi.ir/simple
-ARG PIP_TRUSTED_HOST=pypi.ir
+ARG PIP_INDEX_URL=https://mirror.chabokan.net/repository/pypi-proxy/simple
+ARG PIP_TRUSTED_HOST=mirror.chabokan.net
 ARG PIP_EXTRA_INDEX_URL=https://pypi.org/simple
 
 COPY requirements.txt .
