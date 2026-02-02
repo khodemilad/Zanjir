@@ -1,9 +1,13 @@
-FROM python:3.11-slim
+ARG PYTHON_IMAGE=docker.arvancloud.ir/python:3.11-slim
+FROM ${PYTHON_IMAGE}
 
 WORKDIR /app
 
+ARG PIP_INDEX_URL=https://pypi.ir/simple
+ARG PIP_TRUSTED_HOST=pypi.ir
+
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --index-url "${PIP_INDEX_URL}" --trusted-host "${PIP_TRUSTED_HOST}" -r requirements.txt
 
 COPY . .
 

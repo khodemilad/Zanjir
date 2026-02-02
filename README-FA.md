@@ -327,6 +327,23 @@ https://your-domain.com:8443
 - `docker.arvancloud.ir`
 - `registry.docker.ir`
 
+**نکته:** ایمیج‌های Docker و وابستگی‌های پایتون به‌صورت پیش‌فرض روی میرورهای ایرانی تنظیم شده‌اند:
+- ایمیج‌ها: `docker.arvancloud.ir/...`
+- پکیج‌های پایتون: `PIP_INDEX_URL=https://pypi.ir/simple`
+
+اگر نیاز داشتید میرورها را تغییر دهید، بعد از نصب فایل `.env` را ویرایش کنید:
+```bash
+CONDUIT_IMAGE=docker.io/matrixconduit/matrix-conduit:latest
+COTURN_IMAGE=coturn/coturn:latest
+ELEMENT_IMAGE=vectorim/element-web:v1.11.50
+ELEMENT_COPY_IMAGE=vectorim/element-web:v1.11.50
+CADDY_IMAGE=caddy:2-alpine
+DENDRITE_IMAGE=matrixdotorg/dendrite-monolith:latest
+PYTHON_IMAGE=python:3.11-slim
+PIP_INDEX_URL=https://pypi.org/simple
+PIP_TRUSTED_HOST=pypi.org
+```
+
 #### ثبت‌نام کار نمی‌کند
 
 **بررسی کنید:**

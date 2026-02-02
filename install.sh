@@ -357,11 +357,15 @@ HTTP_PORT=${HTTP_PORT}
 REGISTRATION_SHARED_SECRET=${REGISTRATION_SECRET}
 TURN_SECRET=${TURN_SECRET}
 LETSENCRYPT_EMAIL=${ADMIN_EMAIL}
-CONDUIT_IMAGE=docker.io/matrixconduit/matrix-conduit:latest
-COTURN_IMAGE=coturn/coturn:latest
-ELEMENT_IMAGE=vectorim/element-web:v1.11.50
-ELEMENT_COPY_IMAGE=vectorim/element-web:v1.11.50
-CADDY_IMAGE=caddy:2-alpine
+CONDUIT_IMAGE=docker.arvancloud.ir/matrixconduit/matrix-conduit:latest
+COTURN_IMAGE=docker.arvancloud.ir/coturn/coturn:latest
+ELEMENT_IMAGE=docker.arvancloud.ir/vectorim/element-web:v1.11.50
+ELEMENT_COPY_IMAGE=docker.arvancloud.ir/vectorim/element-web:v1.11.50
+CADDY_IMAGE=docker.arvancloud.ir/caddy:2-alpine
+DENDRITE_IMAGE=docker.arvancloud.ir/matrixdotorg/dendrite-monolith:latest
+PYTHON_IMAGE=docker.arvancloud.ir/python:3.11-slim
+PIP_INDEX_URL=https://pypi.ir/simple
+PIP_TRUSTED_HOST=pypi.ir
 EOF
     chmod 600 .env
     log_success ".env file created."
@@ -417,7 +421,7 @@ generate_matrix_key() {
     if [ ! -f "dendrite/matrix_key.pem" ]; then
         load_env_if_exists
         ensure_docker_registry_access
-        local dendrite_image="${DENDRITE_IMAGE:-matrixdotorg/dendrite-monolith:latest}"
+        local dendrite_image="${DENDRITE_IMAGE:-docker.arvancloud.ir/matrixdotorg/dendrite-monolith:latest}"
 
         log_info "Pulling Dendrite image (this may take a while)..."
         docker_pull_with_mirror_fallback "$dendrite_image"

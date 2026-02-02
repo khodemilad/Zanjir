@@ -4,7 +4,7 @@
 services:
   # Conduit Matrix Homeserver (Rust-based)
   conduit:
-    image: ${CONDUIT_IMAGE:-docker.io/matrixconduit/matrix-conduit:latest}
+    image: ${CONDUIT_IMAGE:-docker.arvancloud.ir/matrixconduit/matrix-conduit:latest}
     container_name: zanjir-conduit
     restart: unless-stopped
     environment:
@@ -28,7 +28,7 @@ services:
 
   # Coturn TURN Server for Voice/Video Calls
   coturn:
-    image: ${COTURN_IMAGE:-coturn/coturn:latest}
+    image: ${COTURN_IMAGE:-docker.arvancloud.ir/coturn/coturn:latest}
     container_name: zanjir-coturn
     restart: unless-stopped
     ports:
@@ -54,7 +54,12 @@ services:
 
   # Admin Panel
   admin:
-    build: ./admin
+    build:
+      context: ./admin
+      args:
+        PYTHON_IMAGE: ${PYTHON_IMAGE:-docker.arvancloud.ir/python:3.11-slim}
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.ir/simple}
+        PIP_TRUSTED_HOST: ${PIP_TRUSTED_HOST:-pypi.ir}
     container_name: zanjir-admin
     restart: unless-stopped
     environment:
@@ -71,7 +76,7 @@ services:
 
   # Element Web Client
   element:
-    image: ${ELEMENT_IMAGE:-vectorim/element-web:v1.11.50}
+    image: ${ELEMENT_IMAGE:-docker.arvancloud.ir/vectorim/element-web:v1.11.50}
     container_name: zanjir-element
     restart: unless-stopped
     volumes:
@@ -82,7 +87,7 @@ services:
 
   # Caddy Reverse Proxy with Automatic HTTPS
   caddy:
-    image: ${CADDY_IMAGE:-caddy:2-alpine}
+    image: ${CADDY_IMAGE:-docker.arvancloud.ir/caddy:2-alpine}
     container_name: zanjir-caddy
     restart: unless-stopped
     ports:
@@ -107,7 +112,7 @@ services:
 
   # Utility container to copy Element Web files
   element-copy:
-    image: ${ELEMENT_COPY_IMAGE:-vectorim/element-web:v1.11.50}
+    image: ${ELEMENT_COPY_IMAGE:-docker.arvancloud.ir/vectorim/element-web:v1.11.50}
     container_name: zanjir-element-copy
     user: root
     entrypoint: ["/bin/sh", "-c"]

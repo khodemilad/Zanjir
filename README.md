@@ -333,6 +333,23 @@ https://your-domain.com:8443
 - `docker.arvancloud.ir`
 - `registry.docker.ir`
 
+**Note:** Docker images and Python dependencies are configured to use Iranian mirrors by default:
+- Docker images: `docker.arvancloud.ir/...`
+- Python packages: `PIP_INDEX_URL=https://pypi.ir/simple`
+
+If you need to override mirrors, edit `.env` after installation:
+```bash
+CONDUIT_IMAGE=docker.io/matrixconduit/matrix-conduit:latest
+COTURN_IMAGE=coturn/coturn:latest
+ELEMENT_IMAGE=vectorim/element-web:v1.11.50
+ELEMENT_COPY_IMAGE=vectorim/element-web:v1.11.50
+CADDY_IMAGE=caddy:2-alpine
+DENDRITE_IMAGE=matrixdotorg/dendrite-monolith:latest
+PYTHON_IMAGE=python:3.11-slim
+PIP_INDEX_URL=https://pypi.org/simple
+PIP_TRUSTED_HOST=pypi.org
+```
+
 #### Registration not working
 
 **Check:**
