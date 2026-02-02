@@ -329,7 +329,7 @@ https://your-domain.com:8443
 
 **نکته:** ایمیج‌های Docker و وابستگی‌های پایتون به‌صورت پیش‌فرض روی میرورهای ایرانی تنظیم شده‌اند:
 - ایمیج‌ها: `docker.arvancloud.ir/...`
-- پکیج‌های پایتون: `PIP_INDEX_URL=https://pypi.ir/simple`
+- پکیج‌های پایتون: `PIP_INDEX_URL=https://mirror.chabokan.net/repository/pypi-proxy/simple`
 
 اگر نیاز داشتید میرورها را تغییر دهید، بعد از نصب فایل `.env` را ویرایش کنید:
 ```bash
@@ -340,8 +340,8 @@ ELEMENT_COPY_IMAGE=vectorim/element-web:v1.11.50
 CADDY_IMAGE=caddy:2-alpine
 DENDRITE_IMAGE=matrixdotorg/dendrite-monolith:latest
 PYTHON_IMAGE=python:3.11-slim
-PIP_INDEX_URL=https://pypi.org/simple
-PIP_TRUSTED_HOST=pypi.org
+PIP_INDEX_URL=https://mirror.chabokan.net/repository/pypi-proxy/simple
+PIP_TRUSTED_HOST=mirror.chabokan.net
 ```
 
 #### ثبت‌نام کار نمی‌کند

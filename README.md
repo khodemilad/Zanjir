@@ -335,7 +335,7 @@ https://your-domain.com:8443
 
 **Note:** Docker images and Python dependencies are configured to use Iranian mirrors by default:
 - Docker images: `docker.arvancloud.ir/...`
-- Python packages: `PIP_INDEX_URL=https://pypi.ir/simple`
+- Python packages: `PIP_INDEX_URL=https://mirror.chabokan.net/repository/pypi-proxy/simple`
 
 If you need to override mirrors, edit `.env` after installation:
 ```bash
@@ -346,8 +346,8 @@ ELEMENT_COPY_IMAGE=vectorim/element-web:v1.11.50
 CADDY_IMAGE=caddy:2-alpine
 DENDRITE_IMAGE=matrixdotorg/dendrite-monolith:latest
 PYTHON_IMAGE=python:3.11-slim
-PIP_INDEX_URL=https://pypi.org/simple
-PIP_TRUSTED_HOST=pypi.org
+PIP_INDEX_URL=https://mirror.chabokan.net/repository/pypi-proxy/simple
+PIP_TRUSTED_HOST=mirror.chabokan.net
 ```
 
 #### Registration not working
