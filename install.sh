@@ -58,6 +58,45 @@ is_dockerhub_restriction_error() {
     echo "$text" | grep -Eqi '403 Forbidden|export control regulations|Since Docker is a US company'
 }
 
+is_registry_unknown_error() {
+    local text=$1
+    echo "$text" | grep -Eqi 'error from registry: unknown|manifest unknown|repository does not exist|not found'
+}
+
+set_env_value() {
+    local key=$1
+    local value=$2
+
+    if [ -f ".env" ]; then
+        if grep -q "^${key}=" .env; then
+            sed -i "s|^${key}=.*|${key}=${value}|" .env
+        else
+            printf "%s=%s\n" "$key" "$value" >> .env
+        fi
+    else
+        printf "%s=%s\n" "$key" "$value" >> .env
+    fi
+}
+
+switch_to_dockerhub_images() {
+    log_warning "Switching image sources to Docker Hub defaults..."
+    CONDUIT_IMAGE="docker.io/matrixconduit/matrix-conduit:latest"
+    COTURN_IMAGE="docker.io/coturn/coturn:latest"
+    ELEMENT_IMAGE="docker.io/vectorim/element-web:v1.11.50"
+    ELEMENT_COPY_IMAGE="docker.io/vectorim/element-web:v1.11.50"
+    CADDY_IMAGE="docker.io/caddy:2-alpine"
+    DENDRITE_IMAGE="docker.io/matrixdotorg/dendrite-monolith:latest"
+    PYTHON_IMAGE="docker.io/python:3.11-slim"
+
+    set_env_value "CONDUIT_IMAGE" "$CONDUIT_IMAGE"
+    set_env_value "COTURN_IMAGE" "$COTURN_IMAGE"
+    set_env_value "ELEMENT_IMAGE" "$ELEMENT_IMAGE"
+    set_env_value "ELEMENT_COPY_IMAGE" "$ELEMENT_COPY_IMAGE"
+    set_env_value "CADDY_IMAGE" "$CADDY_IMAGE"
+    set_env_value "DENDRITE_IMAGE" "$DENDRITE_IMAGE"
+    set_env_value "PYTHON_IMAGE" "$PYTHON_IMAGE"
+}
+
 json_array_from_csv() {
     local csv=$1
     python3 - "$csv" <<'PY'
@@ -457,6 +496,9 @@ start_services() {
     if [ "$pull_code" -ne 0 ]; then
         if is_dockerhub_restriction_error "$pull_out"; then
             ensure_docker_registry_access
+            docker compose pull
+        elif is_registry_unknown_error "$pull_out"; then
+            switch_to_dockerhub_images
             docker compose pull
         else
             echo "$pull_out" >&2
