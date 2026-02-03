@@ -344,6 +344,8 @@ PIP_INDEX_URL=https://mirror.chabokan.net/repository/pypi-proxy/simple
 PIP_TRUSTED_HOST=mirror.chabokan.net
 ```
 
+**نکته:** برای جلوگیری از تغییر خودکار به Docker Hub (مثلاً وقتی ایمیج در میرور پیدا نشود)، مقدار `ALLOW_DOCKERHUB_FALLBACK` را روی `false` نگه دارید یا اصلاً تنظیم نکنید. اگر نیاز داشتید به Docker Hub برگردید، این مقدار را `true` بگذارید.
+
 #### ثبت‌نام کار نمی‌کند
 
 **بررسی کنید:**

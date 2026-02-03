@@ -485,6 +485,7 @@ generate_matrix_key() {
 }
 
 start_services() {
+    load_env_if_exists
     ensure_docker_registry_access
     log_info "Pulling Docker images (this may take a while)..."
     set +e
@@ -498,8 +499,15 @@ start_services() {
             ensure_docker_registry_access
             docker compose pull
         elif is_registry_unknown_error "$pull_out"; then
-            switch_to_dockerhub_images
-            docker compose pull
+            local allow_dockerhub_fallback="${ALLOW_DOCKERHUB_FALLBACK:-false}"
+            if [ "$allow_dockerhub_fallback" = "true" ]; then
+                switch_to_dockerhub_images
+                docker compose pull
+            else
+                log_error "Image not found in the current registry mirror. Set ALLOW_DOCKERHUB_FALLBACK=true in .env if you want to fall back to Docker Hub."
+                echo "$pull_out" >&2
+                exit "$pull_code"
+            fi
         else
             echo "$pull_out" >&2
             exit "$pull_code"

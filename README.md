@@ -350,6 +350,8 @@ PIP_INDEX_URL=https://mirror.chabokan.net/repository/pypi-proxy/simple
 PIP_TRUSTED_HOST=mirror.chabokan.net
 ```
 
+**Note:** To avoid automatically falling back to Docker Hub (e.g. when an image is missing from the mirror), keep `ALLOW_DOCKERHUB_FALLBACK` unset or set to `false`. Set it to `true` only if you want to allow Docker Hub fallback.
+
 #### Registration not working
 
 **Check:**
